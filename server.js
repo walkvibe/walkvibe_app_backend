@@ -1,7 +1,7 @@
+require('dotenv').config(); // this must be the first line
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-require('dotenv').config(); // Import dotenv to use the .env file
 
 const app = express();
 
