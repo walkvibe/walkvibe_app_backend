@@ -27,6 +27,11 @@ const Booking = mongoose.model('Booking', {
   price: Number,
 });
 
+// Basic route to handle GET requests at the root URL
+app.get('/', (req, res) => {
+  res.send('Welcome to WalkVibe API!');
+});
+
 // Endpoint to create a booking
 app.post('/api/bookings', async (req, res) => {
   const newBooking = new Booking(req.body);
@@ -49,7 +54,7 @@ app.get('/api/bookings', async (req, res) => {
 });
 
 // Start the server
-const port = 3000;
+const port = process.env.PORT || 3000; // Use environment variable for the port (for Render or local)
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
