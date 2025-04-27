@@ -1,20 +1,31 @@
-require('dotenv').config(); // this must be the first line
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const app = express();
 
-// Use body-parser to parse incoming JSON requests
+// Middleware to parse JSON
 app.use(bodyParser.json());
 
-// Connect to MongoDB using the URI from the .env file
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch(err => console.log("MongoDB connection error:", err));
+// Check if MONGO_URI is loaded
+if (!process.env.MONGO_URI) {
+  console.error('❌ MONGO_URI is not set. Please check your .env or environment variables.');
+  process.exit(1); // Stop the server
+}
 
-// Define a Booking model
-const Booking = mongoose.model('Booking', {
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('✅ Connected to MongoDB Atlas'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
+    process.exit(1); // Stop if cannot connect
+  });
+
+// Define the Booking schema
+const bookingSchema = new mongoose.Schema({
   company: String,
   email: String,
   phone: String,
@@ -25,36 +36,40 @@ const Booking = mongoose.model('Booking', {
   durationType: String,
   plan: String,
   price: Number,
-});
+}, { timestamps: true }); // Add createdAt, updatedAt automatically
 
-// Basic route to handle GET requests at the root URL
+const Booking = mongoose.model('Booking', bookingSchema);
+
+// Root Route
 app.get('/', (req, res) => {
-  res.send('Welcome to WalkVibe API!');
+  res.send('🚀 Welcome to WalkVibe API!');
 });
 
-// Endpoint to create a booking
+// Create a new booking
 app.post('/api/bookings', async (req, res) => {
-  const newBooking = new Booking(req.body);
   try {
+    const newBooking = new Booking(req.body);
     await newBooking.save();
-    res.json({ message: 'Booking received successfully!' });
+    res.status(201).json({ message: 'Booking received successfully!' });
   } catch (err) {
-    res.status(500).json({ message: 'Error saving booking', error: err });
+    console.error('❌ Error saving booking:', err.message);
+    res.status(500).json({ message: 'Error saving booking', error: err.message });
   }
 });
 
-// Endpoint to fetch all bookings (for admin)
+// Fetch all bookings (for admin)
 app.get('/api/bookings', async (req, res) => {
   try {
     const bookings = await Booking.find();
     res.json(bookings);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching bookings', error: err });
+    console.error('❌ Error fetching bookings:', err.message);
+    res.status(500).json({ message: 'Error fetching bookings', error: err.message });
   }
 });
 
 // Start the server
-const port = process.env.PORT || 3000; // Use environment variable for the port (for Render or local)
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`✅ Server is running on http://localhost:${port}`);
 });
